@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Exchange Rate Widget</string>
+    <string name="exchange_rate_widget_description">Anlık döviz kuru takibi yapabileceğiniz widget</string>
+</resources>
