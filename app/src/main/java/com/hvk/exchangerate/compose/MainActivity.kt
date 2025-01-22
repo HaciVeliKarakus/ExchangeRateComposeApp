@@ -11,8 +11,10 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.Color
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.datastore.preferences.core.Preferences
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.state.getAppWidgetState
+import androidx.glance.state.PreferencesGlanceStateDefinition
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -57,12 +59,16 @@ class MainActivity : ComponentActivity() {
                     val manager = GlanceAppWidgetManager(this@MainActivity)
                     val glanceIds = manager.getGlanceIds(ExchangeRateWidget::class.java)
                     if (glanceIds.isNotEmpty()) {
-                        val state = getAppWidgetState(this@MainActivity, glanceIds.first())
-                        euroRate = state[ExchangeRateWidget.euroRateKey]
-                        usdRate = state[ExchangeRateWidget.usdRateKey]
-                        gbpRate = state[ExchangeRateWidget.gbpRateKey]
-                        lastUpdate = state[ExchangeRateWidget.lastUpdateKey]
-                        isLoading = state[ExchangeRateWidget.isLoadingKey] ?: false
+                        val prefs = getAppWidgetState(
+                            context = this@MainActivity,
+                            definition = PreferencesGlanceStateDefinition,
+                            glanceId = glanceIds.first()
+                        )
+                        euroRate = prefs[ExchangeRateWidget.euroRateKey]
+                        usdRate = prefs[ExchangeRateWidget.usdRateKey]
+                        gbpRate = prefs[ExchangeRateWidget.gbpRateKey]
+                        lastUpdate = prefs[ExchangeRateWidget.lastUpdateKey]
+                        isLoading = prefs[ExchangeRateWidget.isLoadingKey] ?: false
                     }
                 } catch (e: Exception) {
                     // Widget henüz oluşturulmamış olabilir

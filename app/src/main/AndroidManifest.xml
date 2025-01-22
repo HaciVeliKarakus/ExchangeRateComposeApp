@@ -24,6 +24,13 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/exchange_rate_widget_info" />
         </receiver>
+        <receiver
+            android:name=".receiver.WidgetUpdateReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.hvk.exchangerate.compose.widget.UPDATE" />
+            </intent-filter>
+        </receiver>
         <activity
             android:name=".MainActivity"
             android:exported="true"

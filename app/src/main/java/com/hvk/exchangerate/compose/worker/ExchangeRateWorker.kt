@@ -12,6 +12,7 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.OneTimeWorkRequest
 import com.hvk.exchangerate.compose.data.ExchangeRateApi
+import com.hvk.exchangerate.compose.receiver.WidgetUpdateReceiver
 import com.hvk.exchangerate.compose.widget.ExchangeRateWidget
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -66,7 +67,10 @@ class ExchangeRateWorker(
             }
             
             // Güncelleme yayını yap
-            context.sendBroadcast(Intent("com.hvk.exchangerate.compose.WIDGET_UPDATE"))
+            val intent = Intent(WidgetUpdateReceiver.ACTION_UPDATE_WIDGET).apply {
+                setPackage(context.packageName)
+            }
+            context.sendBroadcast(intent)
             
             Result.success()
         } catch (e: Exception) {
@@ -83,7 +87,10 @@ class ExchangeRateWorker(
             }
             
             // Güncelleme yayını yap
-            context.sendBroadcast(Intent("com.hvk.exchangerate.compose.WIDGET_UPDATE"))
+            val intent = Intent(WidgetUpdateReceiver.ACTION_UPDATE_WIDGET).apply {
+                setPackage(context.packageName)
+            }
+            context.sendBroadcast(intent)
             
             Result.retry()
         }
