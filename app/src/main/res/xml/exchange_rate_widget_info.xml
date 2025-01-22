@@ -5,4 +5,5 @@
     android:updatePeriodMillis="600000"
     android:resizeMode="horizontal|vertical"
     android:widgetCategory="home_screen"
+    android:previewImage="@drawable/ic_splash_icon"
     android:description="@string/exchange_rate_widget_description" /> 
