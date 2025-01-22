@@ -1,6 +1,7 @@
 package com.hvk.exchangerate.compose.worker
 
 import android.content.Context
+import android.content.Intent
 import androidx.datastore.preferences.core.MutablePreferences
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.state.updateAppWidgetState
@@ -9,6 +10,7 @@ import androidx.work.WorkerParameters
 import androidx.work.WorkManager
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.OneTimeWorkRequest
 import com.hvk.exchangerate.compose.data.ExchangeRateApi
 import com.hvk.exchangerate.compose.widget.ExchangeRateWidget
 import retrofit2.Retrofit
@@ -58,12 +60,31 @@ class ExchangeRateWorker(
                     prefs[ExchangeRateWidget.usdRateKey] = usdToTry.toString()
                     prefs[ExchangeRateWidget.gbpRateKey] = gbpToTry.toString()
                     prefs[ExchangeRateWidget.lastUpdateKey] = currentTime
+                    prefs[ExchangeRateWidget.isLoadingKey] = false
                 }
                 widget.update(context, glanceId)
             }
             
+            // Güncelleme yayını yap
+            context.sendBroadcast(Intent("com.hvk.exchangerate.compose.WIDGET_UPDATE"))
+            
             Result.success()
         } catch (e: Exception) {
+            // Hata durumunda da yükleme durumunu false yap
+            val manager = GlanceAppWidgetManager(context)
+            val glanceIds = manager.getGlanceIds(ExchangeRateWidget::class.java)
+            val widget = ExchangeRateWidget()
+            
+            glanceIds.forEach { glanceId ->
+                updateAppWidgetState(context, glanceId) { prefs: MutablePreferences ->
+                    prefs[ExchangeRateWidget.isLoadingKey] = false
+                }
+                widget.update(context, glanceId)
+            }
+            
+            // Güncelleme yayını yap
+            context.sendBroadcast(Intent("com.hvk.exchangerate.compose.WIDGET_UPDATE"))
+            
             Result.retry()
         }
     }
@@ -71,9 +92,9 @@ class ExchangeRateWorker(
     companion object {
         private const val WORK_NAME = "ExchangeRateUpdate"
 
-        fun startPeriodicWork(context: Context) {
+        fun startPeriodicWork(context: Context, intervalMinutes: Int = 10) {
             val request = PeriodicWorkRequestBuilder<ExchangeRateWorker>(
-                10, TimeUnit.MINUTES
+                intervalMinutes.toLong(), TimeUnit.MINUTES
             ).build()
 
             WorkManager.getInstance(context).enqueueUniquePeriodicWork(
@@ -81,6 +102,13 @@ class ExchangeRateWorker(
                 ExistingPeriodicWorkPolicy.UPDATE,
                 request
             )
+        }
+
+        fun startOneTimeWork(context: Context) {
+            val request = OneTimeWorkRequest.Builder(ExchangeRateWorker::class.java)
+                .build()
+            
+            WorkManager.getInstance(context).enqueue(request)
         }
     }
 } 

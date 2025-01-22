@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.sp
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.text.FontWeight
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.glance.Image
 import androidx.glance.currentState
@@ -27,6 +28,7 @@ import androidx.glance.state.PreferencesGlanceStateDefinition
 import androidx.glance.action.clickable
 import androidx.glance.ImageProvider
 import androidx.glance.action.ActionParameters
+import androidx.glance.appwidget.state.updateAppWidgetState
 import androidx.glance.layout.Alignment
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
@@ -142,21 +144,39 @@ class ExchangeRateWidget : GlanceAppWidget() {
                     }
                     
                     Spacer(modifier = GlanceModifier.height(12.dp))
-                    Text(
-                        text = "Son Güncelleme: " + (currentState<Preferences>()[lastUpdateKey] ?: ""),
-                        style = TextStyle(
-                            color = ColorProvider(Color(0xFF9E9E9E)),
-                            fontSize = 12.sp
+                    Box(
+                        modifier = GlanceModifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = "Son Güncelleme: " + (currentState<Preferences>()[lastUpdateKey]
+                                ?: ""),
+                            style = TextStyle(
+                                color = ColorProvider(Color(0xFF9E9E9E)),
+                                fontSize = 12.sp
+                            ),
+//                            modifier = GlanceModifier.(Alignment.CenterStart)
                         )
-                    )
-                    Row {
-                        Image(
-                            provider = ImageProvider(R.drawable.ic_refresh),
-                            contentDescription = "Yenile",
-                            modifier = GlanceModifier
-                                .size(24.dp)
-                                .clickable(actionRunCallback<RefreshAction>())
-                        )
+                        
+                        // Yükleme durumuna göre ikonu göster
+                        val isLoading = currentState<Preferences>().get(isLoadingKey) ?: false
+                        if (isLoading) {
+                            Image(
+                                provider = ImageProvider(R.drawable.ic_refresh_animated),
+                                contentDescription = "Yükleniyor",
+                                modifier = GlanceModifier
+                                    .size(24.dp)
+//                                    .align(Alignment.CenterEnd)
+                            )
+                        } else {
+                            Image(
+                                provider = ImageProvider(R.drawable.ic_refresh),
+                                contentDescription = "Yenile",
+                                modifier = GlanceModifier
+                                    .size(24.dp)
+                                    .clickable(actionRunCallback<RefreshAction>())
+//                                    .align(Alignment.CenterEnd)
+                            )
+                        }
                     }
                 }
             }
@@ -168,6 +188,7 @@ class ExchangeRateWidget : GlanceAppWidget() {
         val usdRateKey = stringPreferencesKey("usd_rate")
         val gbpRateKey = stringPreferencesKey("gbp_rate")
         val lastUpdateKey = stringPreferencesKey("last_update")
+        val isLoadingKey = booleanPreferencesKey("is_loading")
     }
 }
 
@@ -177,6 +198,15 @@ class RefreshAction : ActionCallback {
         glanceId: GlanceId,
         parameters: ActionParameters
     ) {
+        // Yükleme durumunu true yap
+        updateAppWidgetState(context, glanceId) { prefs ->
+            prefs[ExchangeRateWidget.isLoadingKey] = true
+        }
+        
+        // Widget'ı güncelle
+        ExchangeRateWidget().update(context, glanceId)
+        
+        // WorkManager işini başlat
         val workRequest = OneTimeWorkRequestBuilder<ExchangeRateWorker>().build()
         WorkManager.getInstance(context).enqueue(workRequest)
     }

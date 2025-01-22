@@ -68,4 +68,16 @@ dependencies {
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.androidx.work.runtime.ktx)
+
+    // Splash Screen API
+    implementation(libs.androidx.core.splashscreen)
+
+    // Navigation
+    implementation("androidx.navigation:navigation-compose:2.8.5")
+    
+    // DataStore
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
+    
+    // Extended Icons
+    implementation("androidx.compose.material:material-icons-extended:1.7.6")
 }
