@@ -44,6 +44,9 @@ class MainActivity : ComponentActivity() {
         
         settingsDataStore = SettingsDataStore(this)
         
+        // Uygulama açılışında otomatik güncelleme yap
+        ExchangeRateWorker.startOneTimeWork(this)
+        
         setContent {
             val navController = rememberNavController()
             val scope = rememberCoroutineScope()

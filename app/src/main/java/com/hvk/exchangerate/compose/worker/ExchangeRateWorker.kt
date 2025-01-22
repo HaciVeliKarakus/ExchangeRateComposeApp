@@ -28,6 +28,9 @@ class ExchangeRateWorker(
     private val api = ExchangeRateApi()
 
     override suspend fun doWork(): Result {
+        // Güncelleme başladığında toast mesaj göster
+        showToast("Döviz kurları güncelleniyor...")
+        
         return try {
             // USD bazında TRY, EUR ve GBP kurlarını al
             val response = api.getLatestRates()
@@ -65,6 +68,9 @@ class ExchangeRateWorker(
             }
             context.sendBroadcast(intent)
             
+            // Güncelleme başarılı olduğunda toast mesaj göster
+            showToast("Döviz kurları güncellendi")
+            
             Result.success()
         } catch (e: Exception) {
             // Hata durumunda da yükleme durumunu false yap
@@ -85,8 +91,15 @@ class ExchangeRateWorker(
             }
             context.sendBroadcast(intent)
             
+            // Hata durumunda toast mesaj göster
+            showToast("Döviz kurları güncellenemedi")
+            
             Result.retry()
         }
+    }
+    
+    private fun showToast(message: String) {
+        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
     }
 
     companion object {
