@@ -2,6 +2,7 @@ package com.hvk.exchangerate.compose.worker
 
 import android.content.Context
 import android.content.Intent
+import android.widget.Toast
 import androidx.datastore.preferences.core.MutablePreferences
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.state.updateAppWidgetState
@@ -14,9 +15,6 @@ import androidx.work.OneTimeWorkRequest
 import com.hvk.exchangerate.compose.data.ExchangeRateApi
 import com.hvk.exchangerate.compose.receiver.WidgetUpdateReceiver
 import com.hvk.exchangerate.compose.widget.ExchangeRateWidget
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
-import com.hvk.exchangerate.compose.data.ApiConfig
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -27,11 +25,7 @@ class ExchangeRateWorker(
     params: WorkerParameters
 ) : CoroutineWorker(context, params) {
 
-    private val api = Retrofit.Builder()
-        .baseUrl(ApiConfig.BASE_URL)
-        .addConverterFactory(GsonConverterFactory.create())
-        .build()
-        .create(ExchangeRateApi::class.java)
+    private val api = ExchangeRateApi()
 
     override suspend fun doWork(): Result {
         return try {
@@ -66,7 +60,6 @@ class ExchangeRateWorker(
                 widget.update(context, glanceId)
             }
             
-            // Güncelleme yayını yap
             val intent = Intent(WidgetUpdateReceiver.ACTION_UPDATE_WIDGET).apply {
                 setPackage(context.packageName)
             }
@@ -109,6 +102,13 @@ class ExchangeRateWorker(
                 ExistingPeriodicWorkPolicy.UPDATE,
                 request
             )
+            
+            // Yenileme aralığı değiştiğinde toast mesaj göster
+            Toast.makeText(
+                context,
+                "Döviz kurları ${intervalMinutes} dakikada bir güncellenecek",
+                Toast.LENGTH_SHORT
+            ).show()
         }
 
         fun startOneTimeWork(context: Context) {

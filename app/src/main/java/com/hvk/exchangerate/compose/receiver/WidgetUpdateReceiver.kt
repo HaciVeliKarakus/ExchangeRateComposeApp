@@ -31,7 +31,7 @@ class WidgetUpdateReceiver(
                     val manager = GlanceAppWidgetManager(context)
                     val glanceIds = manager.getGlanceIds(ExchangeRateWidget::class.java)
                     if (glanceIds.isNotEmpty()) {
-                        val prefs = getAppWidgetState<Preferences>(
+                        val prefs = getAppWidgetState(
                             context = context,
                             definition = PreferencesGlanceStateDefinition,
                             glanceId = glanceIds.first()
@@ -57,10 +57,10 @@ class WidgetUpdateReceiver(
         fun register(context: Context, receiver: WidgetUpdateReceiver) {
             val filter = IntentFilter(ACTION_UPDATE_WIDGET)
             ContextCompat.registerReceiver(
-                context,
-                receiver,
-                filter,
-                ContextCompat.RECEIVER_NOT_EXPORTED
+                /* context = */ context,
+                /* receiver = */ receiver,
+                /* filter = */ filter,
+                /* flags = */ ContextCompat.RECEIVER_NOT_EXPORTED
             )
         }
 

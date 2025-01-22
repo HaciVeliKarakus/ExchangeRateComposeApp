@@ -1,6 +1,7 @@
 package com.hvk.exchangerate.compose.widget
 
 import android.content.Context
+import android.widget.Toast
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.appwidget.GlanceAppWidget
@@ -34,8 +35,16 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.hvk.exchangerate.compose.R
 import com.hvk.exchangerate.compose.worker.ExchangeRateWorker
+import java.text.DecimalFormat
+import java.text.DecimalFormatSymbols
+import java.util.Locale
 
 class ExchangeRateWidget : GlanceAppWidget() {
+
+    private val decimalFormat = DecimalFormat("#,##0.00", DecimalFormatSymbols(Locale("tr"))).apply {
+        minimumFractionDigits = 2
+        maximumFractionDigits = 2
+    }
 
     override val stateDefinition: GlanceStateDefinition<*> = PreferencesGlanceStateDefinition
 
@@ -69,7 +78,7 @@ class ExchangeRateWidget : GlanceAppWidget() {
                             )
                             Spacer(modifier = GlanceModifier.width(8.dp))
                             Text(
-                                text = "%.2f ₺".format(euroRate.toDouble()),
+                                text = "${decimalFormat.format(euroRate.toDouble())} ₺",
                                 style = TextStyle(
                                     color = ColorProvider(Color.White),
                                     fontSize = 18.sp,
@@ -101,7 +110,7 @@ class ExchangeRateWidget : GlanceAppWidget() {
                             )
                             Spacer(modifier = GlanceModifier.width(8.dp))
                             Text(
-                                text = "%.2f ₺".format(usdRate.toDouble()),
+                                text = "${decimalFormat.format(usdRate.toDouble())} ₺",
                                 style = TextStyle(
                                     color = ColorProvider(Color.White),
                                     fontSize = 18.sp,
@@ -133,7 +142,7 @@ class ExchangeRateWidget : GlanceAppWidget() {
                             )
                             Spacer(modifier = GlanceModifier.width(8.dp))
                             Text(
-                                text = "%.2f ₺".format(gbpRate.toDouble()),
+                                text = "${decimalFormat.format(gbpRate.toDouble())} ₺",
                                 style = TextStyle(
                                     color = ColorProvider(Color.White),
                                     fontSize = 18.sp,
@@ -143,29 +152,19 @@ class ExchangeRateWidget : GlanceAppWidget() {
                         }
                     }
                     
-                    Spacer(modifier = GlanceModifier.height(12.dp))
-                    Box(
-                        modifier = GlanceModifier.fillMaxWidth()
+                    Spacer(modifier = GlanceModifier.defaultWeight())
+                    Row(
+                        modifier = GlanceModifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.Start,
+                        verticalAlignment = Alignment.Bottom
                     ) {
-                        Text(
-                            text = "Son Güncelleme: " + (currentState<Preferences>()[lastUpdateKey]
-                                ?: ""),
-                            style = TextStyle(
-                                color = ColorProvider(Color(0xFF9E9E9E)),
-                                fontSize = 12.sp
-                            ),
-//                            modifier = GlanceModifier.(Alignment.CenterStart)
-                        )
-                        
                         // Yükleme durumuna göre ikonu göster
                         val isLoading = currentState<Preferences>().get(isLoadingKey) ?: false
                         if (isLoading) {
                             Image(
                                 provider = ImageProvider(R.drawable.ic_refresh_animated),
                                 contentDescription = "Yükleniyor",
-                                modifier = GlanceModifier
-                                    .size(24.dp)
-//                                    .align(Alignment.CenterEnd)
+                                modifier = GlanceModifier.size(24.dp)
                             )
                         } else {
                             Image(
@@ -174,9 +173,19 @@ class ExchangeRateWidget : GlanceAppWidget() {
                                 modifier = GlanceModifier
                                     .size(24.dp)
                                     .clickable(actionRunCallback<RefreshAction>())
-//                                    .align(Alignment.CenterEnd)
                             )
                         }
+                        
+                        Spacer(modifier = GlanceModifier.defaultWeight())
+                        
+                        Text(
+                            text = "Son Güncelleme: " + (currentState<Preferences>()[lastUpdateKey]
+                                ?: ""),
+                            style = TextStyle(
+                                color = ColorProvider(Color(0xFF9E9E9E)),
+                                fontSize = 12.sp
+                            )
+                        )
                     }
                 }
             }
@@ -198,6 +207,9 @@ class RefreshAction : ActionCallback {
         glanceId: GlanceId,
         parameters: ActionParameters
     ) {
+        // Toast mesajı göster
+        Toast.makeText(context, "Döviz kurları güncelleniyor...", Toast.LENGTH_SHORT).show()
+        
         // Yükleme durumunu true yap
         updateAppWidgetState(context, glanceId) { prefs ->
             prefs[ExchangeRateWidget.isLoadingKey] = true
@@ -214,4 +226,12 @@ class RefreshAction : ActionCallback {
 
 class ExchangeRateWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = ExchangeRateWidget()
+    
+    override fun onEnabled(context: Context) {
+        super.onEnabled(context)
+        
+        // Widget ilk eklendiğinde otomatik güncelleme başlat
+        ExchangeRateWorker.startOneTimeWork(context)
+        ExchangeRateWorker.startPeriodicWork(context)
+    }
 } 

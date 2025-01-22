@@ -1,14 +1,34 @@
 package com.hvk.exchangerate.compose.data
 
-import retrofit2.http.GET
-import retrofit2.http.Query
+import io.ktor.client.*
+import io.ktor.client.call.*
+import io.ktor.client.engine.android.*
+import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.client.plugins.logging.*
+import io.ktor.client.request.*
+import io.ktor.serialization.gson.*
 
-interface ExchangeRateApi {
-    @GET("latest")
+class ExchangeRateApi {
+    private val client = HttpClient(Android) {
+        install(ContentNegotiation) {
+            gson()
+        }
+        install(Logging) {
+            level = LogLevel.BODY
+        }
+    }
+
     suspend fun getLatestRates(
-        @Query("from") from: String = "USD",
-        @Query("to") to: String = "TRY,EUR,GBP"
-    ): ExchangeRateResponse
+        from: String = "USD",
+        to: String = "TRY,EUR,GBP"
+    ): ExchangeRateResponse {
+        return client.get("${ApiConfig.BASE_URL}latest") {
+            url {
+                parameters.append("from", from)
+                parameters.append("to", to)
+            }
+        }.body()
+    }
 }
 
 data class ExchangeRateResponse(
